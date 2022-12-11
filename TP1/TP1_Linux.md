@@ -12,10 +12,10 @@ Comment qu'on fait :
 
 Résultat :
 
-![](%C3%A7a_marche_plus.png)
+![](/TP1/Images/%C3%A7a_marche_plus.png)
 
 PS : Même si on se *logout* c'est cassé
-![](%C3%A7a_marche_plus_1.png)
+![](/TP1/Images/%C3%A7a_marche_plus_1.png)
 
 # 2ème façon
 
@@ -28,9 +28,9 @@ Comment qu'on fait :
 
 Résultat : 
 
-![](%C3%A7a_marche_plus_2.png)
+![](/TP1/Images/%C3%A7a_marche_plus_2.png)
 
-![](%C3%A7a_marche_plus_3.png)
+![](/TP1/Images/%C3%A7a_marche_plus_3.png)
 
 # 3ème façon
 
@@ -46,11 +46,11 @@ Comment qu'on fait :
 
 Résultat : 
 
-![](%C3%A7a_marche_plus_4.png)
+![](/TP1/Images/%C3%A7a_marche_plus_4.png)
 
-![](%C3%A7a_marche_plus_5.png)
+![](/TP1/Images/%C3%A7a_marche_plus_5.png)
 
-![](%C3%A7a_marche_plus_6.png)
+![](/TP1/Images/%C3%A7a_marche_plus_6.png)
 
 # 4ème façon
 
@@ -62,4 +62,4 @@ Elle va générer de nombreux fichiers aléatoirement sur le disque dur ce qui l
 
 Résultat : 
 
-![](%C3%A7a_marche_plus_7.png)
+![](/TP1/Images/%C3%A7a_marche_plus_7.png)

@@ -2,6 +2,8 @@
 
 # I. Service SSH
 
+![](/TP2/Images/ssh-copy-paste.jpg)
+
 ## 1. Analyse du service
 
 🌞 **S'assurer que le service `sshd` est démarré**
@@ -257,6 +259,8 @@ Last login: Fri Dec  9 16:08:13 2022 from 192.168.250.1
 
 # II. Service HTTP
 
+![](/TP2/Images/404.jpg)
+
 ## 1. Mise en place
 
 🌞 **Installer le serveur NGINX**
@@ -445,6 +449,8 @@ fastcgi_param  SERVER_NAME        $server_name;
 
 ## 3. Déployer un nouveau site web
 
+![](/TP2/Images/web-design-meme-18.jpg)
+
 🌞 **Créer un site web**
 
 ````
@@ -576,7 +582,7 @@ $ curl http://192.168.250.7:1043
 
 # III. Your own services
 
-## 1. Au cas où vous auriez oublié
+![](/TP2/Images/Service_Now.jpg)
 
 ## 2. Analyse des services existants
 
