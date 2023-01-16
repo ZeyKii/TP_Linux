@@ -1,0 +1,9 @@
+[Unit]
+Description=Automatique youtube downloader
+
+[Service]
+ExecStart=/srv/yt/yt-v2.sh
+User=yt
+
+[Install]
+WantedBy=multi-user.target
