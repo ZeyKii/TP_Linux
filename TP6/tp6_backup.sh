@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# The script backs places the backup in the /srv/backup folder
+# The script backs up places the backup in the /srv/backup folder
 
 [[ -d /srv/backup ]] || mkdir /srv/backup
 dnf install tar -y
