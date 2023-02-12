@@ -85,9 +85,6 @@ server {
 }
 ```
 
-
-➜ **Modifier votre fichier `hosts` de VOTRE PC**
-
 ```
 maxfe@MSI MINGW64:~$ curl http://web.tp5.linux/
 <!DOCTYPE html>
@@ -98,7 +95,6 @@ maxfe@MSI MINGW64:~$ curl http://web.tp5.linux/
 </head>
 </html>
 ```
-
 
 🌞 **Faites en sorte de**
 
@@ -229,8 +225,6 @@ dnf install tar -y
 cd /var/www/tp5_nextcloud/
 tar -czf /srv/backup/nextcloud_$( date '+%Y-%m-%d_%H-%M-%S' ).tar.gz themes/ data/ config/
 ```
-
-➜ **Environnement d'exécution du script**
 
 ### 3. Service et timer
 
