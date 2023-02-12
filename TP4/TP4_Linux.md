@@ -177,31 +177,311 @@ mount: /mnt/storage does not contain SELinux labels.
 
 # Partie 2 : Serveur de partage de fichiers
 
-**Dans cette partie, le but sera de monter un serveur de stockage.** Un serveur de stockage, ici, désigne simplement un serveur qui partagera un dossier ou plusieurs aux autres machines de son réseau.
-
-Ce dossier sera hébergé sur la partition dédiée sur la machine **`storage.tp4.linux`**.
-
-Afin de partager le dossier, **nous allons mettre en place un serveur NFS** (pour Network File System), qui est prévu à cet effet. Comme d'habitude : c'est un programme qui écoute sur un port, et les clients qui s'y connectent avec un programme client adapté peuvent accéder à un ou plusieurs dossiers partagés.
-
-Le **serveur NFS** sera **`storage.tp4.linux`** et le **client NFS** sera **`web.tp4.linux`**.
-
-L'objectif :
-
-- avoir deux dossiers sur **`storage.tp4.linux`** partagés
-  - `/storage/site_web_1/`
-  - `/storage/site_web_2/`
-- la machine **`web.tp4.linux`** monte ces deux dossiers à travers le réseau
-  - le dossier `/storage/site_web_1/` est monté dans `/var/www/site_web_1/`
-  - le dossier `/storage/site_web_2/` est monté dans `/var/www/site_web_2/`
-
 🌞 **Donnez les commandes réalisées sur le serveur NFS `storage.tp4.linux`**
 
-- contenu du fichier `/etc/exports` dans le compte-rendu notamment
+```
+[fmaxance@storage ~]$ sudo dnf install nfs-utils
+```
+
+```
+[fmaxance@storage ~]$ sudo mkdir /mnt/storage/site_web_1
+[fmaxance@storage ~]$ sudo mkdir /mnt/storage/site_web_2
+```
+
+```
+[fmaxance@storage ~]$ sudo systemctl enable nfs-server
+[fmaxance@storage ~]$ sudo systemctl start nfs-server
+[fmaxance@storage ~]$ sudo !!
+sudo firewall-cmd --permanent --add-service=nfs
+success
+[fmaxance@storage ~]$ sudo firewall-cmd --permanent --add-service=mountd
+success
+[fmaxance@storage ~]$ sudo firewall-cmd --permanent --add-service=rpc-bind
+success
+[fmaxance@storage ~]$ sudo firewall-cmd --reload
+success
+[fmaxance@storage ~]$ sudo firewall-cmd --permanent --list-all | grep services
+  services: cockpit dhcpv6-client mountd nfs rpc-bind ssh
+```
+
+
+```
+[fmaxance@storage ~]$ cat /etc/exports
+/mnt/storage/site_web_1/	192.168.1.2(rw,sync,no_root_squash,no_subtree_check)
+/mnt/storage/site_web_2/	192.168.1.2(rw,sync,no_root_squash,no_subtree_check)
+```
+
 
 🌞 **Donnez les commandes réalisées sur le client NFS `web.tp4.linux`**
+```
+[fmaxance@web ~]$ sudo dnf install nfs-utils
+```
 
-- contenu du fichier `/etc/fstab` dans le compte-rendu notamment
+```
+[fmaxance@web ~]$ sudo mkdir -p /var/www/site_web_1/
+[fmaxance@web ~]$ sudo mkdir -p /var/www/site_web_2/
+[fmaxance@web ~]$ sudo mount 192.168.1.3:/mnt/storage/site_web_1/ /var/www/site_web_1/
+[fmaxance@web ~]$ sudo mount 192.168.1.3:/mnt/storage/site_web_2/ /var/www/site_web_2/
+```
 
-> Je vous laisse vous inspirer de docs sur internet **[comme celle-ci](https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nfs-mount-on-rocky-linux-9)** pour mettre en place un serveur NFS.
+```
+[fmaxance@web ~]$ df -h | grep storage
+192.168.1.3:/mnt/storage/site_web_1  2.0G     0  1.9G   0% /var/www/site_web_1
+192.168.1.3:/mnt/storage/site_web_2  2.0G     0  1.9G   0% /var/www/site_web_2
+```
 
-**Ok, on a fini avec la partie 2, let's head to [the part 3](./../part3/README.md).**
+```
+[fmaxance@web ~]$ cat /etc/fstab 
+
+#
+# /etc/fstab
+# Created by anaconda on Sat Oct 15 12:47:23 2022
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk/'.
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info.
+#
+# After editing this file, run 'systemctl daemon-reload' to update systemd
+# units generated from this file.
+#
+/dev/mapper/rl-root     /                       xfs     defaults        0 0
+UUID=2df805a9-4569-4da4-8afe-e3ee298680df /boot                   xfs     defaults        0 0
+/dev/mapper/rl-swap     none                    swap    defaults        0 0
+192.168.1.3:/mnt/storage/site_web_1 /var/www/site_web_1/ ext4 defaults 0 0
+192.168.1.3:/mnt/storage/site_web_2 /var/www/site_web_2/ ext4 defaults 0 0
+```
+
+# Partie 3 : Serveur web
+
+## 1. Intro NGINX
+
+## 2. Install
+🌞 **Installez NGINX**
+
+```
+[fmaxance@web ~]$ sudo dnf install nginx
+```
+
+## 3. Analyse
+
+```
+[fmaxance@web ~]$ sudo systemctl start nginx
+[fmaxance@web ~]$ sudo systemctl status nginx
+● nginx.service - The nginx HTTP and reverse proxy server
+     Loaded: loaded (/usr/lib/systemd/system/nginx.service; disabled; vendor preset: disabled)
+     Active: active (running) since Tue 2022-12-06 14:06:53 CET; 4s ago
+    Process: 2168 ExecStartPre=/usr/bin/rm -f /run/nginx.pid (code=exited, status=0/SUCCESS)
+    Process: 2169 ExecStartPre=/usr/sbin/nginx -t (code=exited, status=0/SUCCESS)
+    Process: 2170 ExecStart=/usr/sbin/nginx (code=exited, status=0/SUCCESS)
+   Main PID: 2171 (nginx)
+      Tasks: 2 (limit: 4638)
+     Memory: 1.9M
+        CPU: 12ms
+     CGroup: /system.slice/nginx.service
+             ├─2171 "nginx: master process /usr/sbin/nginx"
+             └─2172 "nginx: worker process"
+
+Dec 06 14:06:53 web systemd[1]: Starting The nginx HTTP and reverse proxy server...
+Dec 06 14:06:53 web nginx[2169]: nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+Dec 06 14:06:53 web nginx[2169]: nginx: configuration file /etc/nginx/nginx.conf test is successful
+Dec 06 14:06:53 web systemd[1]: Started The nginx HTTP and reverse proxy server.
+```
+
+🌞 **Analysez le service NGINX**
+
+```
+[fmaxance@web ~]$ ps -ef | grep nginx
+root        2171       1  0 14:06 ?        00:00:00 nginx: master process /usr/sbin/nginx
+nginx       2172    2171  0 14:06 ?        00:00:00 nginx: worker process
+fmaxance       2183    1210  0 14:07 pts/0    00:00:00 grep --color=auto nginx
+```
+```
+[fmaxance@web ~]$ sudo ss -lntup | grep nginx
+tcp   LISTEN 0      511          0.0.0.0:80        0.0.0.0:*    users:(("nginx",pid=2172,fd=6),("nginx",pid=2171,fd=6))
+tcp   LISTEN 0      511             [::]:80           [::]:*    users:(("nginx",pid=2172,fd=7),("nginx",pid=2171,fd=7))
+```
+```
+[fmaxance@web ~]$ ls -al /usr/share/nginx/html/index.html 
+lrwxrwxrwx. 1 root root 25 Oct 31 16:37 /usr/share/nginx/html/index.html -> ../../testpage/index.html
+```
+
+## 4. Visite du service web
+
+🌞 **Configurez le firewall pour autoriser le trafic vers le service NGINX**
+
+```
+[fmaxance@web ~]$ sudo firewall-cmd --zone=public --permanent --add-service=http
+success
+[fmaxance@web ~]$ sudo firewall-cmd --reload
+success
+```
+
+🌞 **Accéder au site web**
+
+```
+maxfe@MSI MINGW64:~$ curl http://192.168.1.2
+<!doctype html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <title>HTTP Server Test Page powered by: Rocky Linux</title>
+```
+
+🌞 **Vérifier les logs d'accès**
+
+```
+[fmaxance@web ~]$ sudo cat /var/log/nginx/access.log | tail -n 3
+192.168.1.0 - - [06/Dec/2022:14:19:40 +0100] "GET /poweredby.png HTTP/1.1" 200 368 "http://192.168.1.2/" "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:107.0) Gecko/20100101 Firefox/107.0" "-"
+192.168.1.0 - - [06/Dec/2022:14:19:41 +0100] "GET /favicon.ico HTTP/1.1" 404 3332 "http://192.168.1.2/" "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:107.0) Gecko/20100101 Firefox/107.0" "-"
+192.168.1.0 - - [06/Dec/2022:14:20:06 +0100] "GET / HTTP/1.1" 200 7620 "-" "curl/7.81.0" "-"
+```
+
+## 5. Modif de la conf du serveur web
+
+🌞 **Changer le port d'écoute**
+
+```
+listen       8080;
+listen       [::]:8080;
+```
+```
+[fmaxance@web ~]$ sudo ss -lntup | grep nginx
+tcp   LISTEN 0      511          0.0.0.0:8080      0.0.0.0:*    users:(("nginx",pid=2387,fd=6),("nginx",pid=2386,fd=6))
+tcp   LISTEN 0      511             [::]:8080         [::]:*    users:(("nginx",pid=2387,fd=7),("nginx",pid=2386,fd=7))
+```
+
+```
+[fmaxance@web ~]$ sudo firewall-cmd --zone=public --permanent --remove-service=http
+success
+[fmaxance@web ~]$ sudo firewall-cmd --zone=public --permanent --add-port 8080/tcp
+success
+[fmaxance@web ~]$ sudo firewall-cmd --reload
+success
+```
+
+```
+maxfe@MSI MINGW64:~$ curl http://192.168.1.2:8080
+<!doctype html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <title>HTTP Server Test Page powered by: Rocky Linux</title>
+    <style type="text/css">
+      /*<![CDATA[*/
+      
+```
+
+🌞 **Changer l'utilisateur qui lance le service**
+
+```
+[fmaxance@web ~]$ sudo useradd web
+[fmaxance@web ~]$ sudo passwd web
+Changing password for user web.
+```
+```
+[fmaxance@web ~]$ sudo cat /etc/nginx/nginx.conf | grep user
+user web;
+[fmaxance@web ~]$ ps -ef | grep nginx
+root        2587       1  0 14:35 ?        00:00:00 nginx: master process /usr/sbin/nginx
+web         2588    2587  0 14:35 ?        00:00:00 nginx: worker process
+fmaxance       2596    1210  0 14:35 pts/0    00:00:00 grep --color=auto nginx
+```
+
+**Il est temps d'utiliser ce qu'on a fait à la partie 2 !**
+
+🌞 **Changer l'emplacement de la racine Web**
+
+```
+[fmaxance@web ~]$ sudo cat /etc/nginx/nginx.conf | grep web
+        root         /var/www/site_web_1/;
+```
+
+## 6. Deux sites web sur un seul serveur
+
+
+🌞 **Repérez dans le fichier de conf**
+
+```
+[fmaxance@web ~]$ sudo cat /etc/nginx/nginx.conf | grep conf.d
+    # Load modular configuration files from the /etc/nginx/conf.d directory.
+    include /etc/nginx/conf.d/*.conf;
+```
+🌞 **Créez le fichier de configuration pour le premier site**
+
+```
+[fmaxance@web ~]$ cat /etc/nginx/conf.d/site_web_1.conf 
+server {
+	listen       8080;
+        listen       [::]:8080;
+        server_name  _;
+        root         /var/www/site_web_1/;
+
+        # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+
+        error_page 404 /404.html;
+        location = /404.html {
+        }
+
+        error_page 500 502 503 504 /50x.html;
+        location = /50x.html {
+        }
+
+}
+```
+
+🌞 **Créez le fichier de configuration pour le deuxième site**
+
+```
+[fmaxance@web ~]$ cat /etc/nginx/conf.d/site_web_2.conf 
+server {
+        listen       8888;
+        listen       [::]:8888;
+        server_name  _;
+        root         /var/www/site_web_2/;
+
+        # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+
+        error_page 404 /404.html;
+        location = /404.html {
+        }
+
+	error_page 500 502 503 504 /50x.html;
+        location = /50x.html {
+        }
+
+}
+```
+
+```
+[fmaxance@web ~]$ sudo firewall-cmd --zone=public --permanent --add-port 8888/tcp
+success
+[fmaxance@web ~]$ sudo systemctl restart nginx
+[fmaxance@web ~]$ sudo firewall-cmd --reload
+success
+```
+
+🌞 **Prouvez que les deux sites sont disponibles**
+
+```
+maxfe@MSI MINGW64:~$ curl http://192.168.1.2:8080
+ <!DOCTYPE html>
+<html>
+<body>
+
+<h1>HEHEHE</h1>
+
+</body>
+</html> 
+maxfe@MSI MINGW64:~$ curl http://192.168.1.2:8888
+ <!DOCTYPE html>
+<html>
+<body>
+
+<h1>2</h1>
+
+</body>
+</html>
+```
